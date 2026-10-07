@@ -161,6 +161,25 @@ final class SoftnetControlFDTests: XCTestCase {
     )
   }
 
+  func testSoftnetExtraArguments() throws {
+    // Prepare a temporary VM for command validation
+    let temporaryHome = try createTemporaryTartHome()
+    let previousHome = ProcessInfo.processInfo.environment["TART_HOME"]
+    setenv("TART_HOME", temporaryHome.path, 1)
+    defer {
+      restoreEnvironment("TART_HOME", value: previousHome)
+      try? FileManager.default.removeItem(at: temporaryHome)
+    }
+
+    // Parse repeated options with a value containing spaces
+    let extra = ["--vm-ip=172.20.0.2", "--vmnet-network=opaque value with spaces"]
+    let command = try Run.parse(["vm"] + extra.map { "--net-softnet-extra=\($0)" })
+
+    // Verify Softnet is enabled and the arguments are preserved
+    XCTAssertTrue(command.netSoftnet)
+    XCTAssertEqual(command.netSoftnetExtra, extra)
+  }
+
   private func createTemporaryTartHome() throws -> URL {
     let temporaryHome = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
     let vm = temporaryHome.appendingPathComponent("vms/vm")

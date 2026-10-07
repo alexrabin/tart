@@ -234,6 +234,9 @@ struct Run: AsyncParsableCommand {
   """, valueName: "file descriptor"))
   var netSoftnetControlFd: Int32?
 
+  @Option(help: .hidden)
+  var netSoftnetExtra: [String] = []
+
   @Option(help: ArgumentHelp("Comma-separated list of TCP ports to expose (e.g. --net-softnet-expose 2222:22,8080:80)", discussion: """
   Options are comma-separated and are as follows:
 
@@ -323,7 +326,7 @@ struct Run: AsyncParsableCommand {
     }
 
     // Automatically enable --net-softnet when any of its related options are specified
-    if netSoftnetAllow != nil || netSoftnetBlock != nil || netSoftnetExpose != nil || netSoftnetControlFd != nil {
+    if netSoftnetAllow != nil || netSoftnetBlock != nil || netSoftnetExpose != nil || netSoftnetControlFd != nil || !netSoftnetExtra.isEmpty {
       netSoftnet = true
     }
 
@@ -695,6 +698,8 @@ struct Run: AsyncParsableCommand {
     if let netSoftnetExpose = netSoftnetExpose {
       softnetExtraArguments += ["--expose", netSoftnetExpose]
     }
+
+    softnetExtraArguments += netSoftnetExtra
 
     if netSoftnet {
       let config = try VMConfig.init(fromURL: vmDir.configURL)
